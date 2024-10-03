@@ -2,8 +2,15 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/mshirdel/sandbox/brokers"
 )
 
 func main() {
-	fmt.Println("ok")
+	if err := brokers.Run("hello from golang"); err != nil {
+		fmt.Println(err)
+		return 
+	}
+	
+	fmt.Println("OK")
 }

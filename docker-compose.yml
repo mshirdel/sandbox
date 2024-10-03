@@ -1,0 +1,34 @@
+# Use root/example as user/password credentials
+version: '3.7'
+
+services:
+
+  db:
+    image: mariadb
+    container_name: sandbox-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: sandbox
+      MARIADB_USER: sandbox
+      MARIADB_PASSWORD: sandbox
+      MARIADB_ROOT_PASSWORD: 123456
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./initdb.d:/docker-entrypoint-initdb.d:ro
+  
+  nats:
+    image: nats:2.9.11-alpine
+    container_name: sandbox-jetstream
+    restart: unless-stopped
+    ports:
+      - '4222:4222'
+      - '6222:6222'
+      - '8222:8222'
+    command: ["--cluster_name", "sandbox", "--jetstream", "-DV", "-m", "8222"]
+
+volumes:
+  mariadb-data:
+    driver: local
