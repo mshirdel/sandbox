@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/mshirdel/sandbox/cmd"
 
 func main() {
-	fmt.Println("test is ok")
+	cmd.Execute()
 }
