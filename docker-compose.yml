@@ -4,21 +4,23 @@ version: '3.7'
 services:
 
   db:
-    image: mariadb
-    container_name: sandbox-db
+    image: postgres:17
+    container_name: sandbox-postgres
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: sandbox
-      MARIADB_USER: sandbox
-      MARIADB_PASSWORD: sandbox
-      MARIADB_ROOT_PASSWORD: 123456
-      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: true
+      POSTGRES_DB: sandbox
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mariadb-data:/var/lib/mysql
-      - ./initdb.d:/docker-entrypoint-initdb.d:ro
-  
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sandbox"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   nats:
     image: nats:2.9.11-alpine
     container_name: sandbox-jetstream
@@ -29,6 +31,23 @@ services:
       - '8222:8222'
     command: ["--cluster_name", "sandbox", "--jetstream", "-DV", "-m", "8222"]
 
+  jaeger:
+    container_name: guardian-jaeger
+    image: jaegertracing/all-in-one:1.28.0
+    restart: unless-stopped
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: 9411
+    ports:
+      - '5775:5775/udp'
+      - '6831:6831/udp'
+      - '6832:6832/udp'
+      - '5778:5778'
+      - '16686:16686'
+      - '14250:14250'
+      - '14268:14268'
+      - '14269:14269'
+      - '9411:9411'
+      - '4317:4317'
+
 volumes:
-  mariadb-data:
-    driver: local
+  pgdata:

@@ -16,6 +16,7 @@ var (
 
 func init() {
 	_rootCMD.AddCommand(_serveCMD)
+	_rootCMD.AddCommand(_runCmd)
 }
 
 func Execute() {
