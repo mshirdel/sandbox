@@ -5,20 +5,23 @@ import (
 	"math"
 	"strings"
 
+	"github.com/labstack/echo-contrib/echoprometheus"
+	"github.com/labstack/echo-contrib/jaegertracing"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/mshirdel/sandbox/app"
+	v1 "github.com/mshirdel/sandbox/app/http/controller/v1"
 )
 
 type Controller struct {
-	app            *app.Application
-	homeController *HomeController
+	app *app.Application
+	v1  *v1.Router
 }
 
 func NewController(app *app.Application) *Controller {
 	return &Controller{
-		app:            app,
-		homeController: NewHomeController(),
+		app: app,
+		v1:  v1.New(app),
 	}
 }
 
@@ -26,9 +29,13 @@ func (c *Controller) Routes() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Recover())
+	e.Use(echoprometheus.NewMiddleware("sandbox-app"))
+	trace := jaegertracing.New(e, nil)
+	defer trace.Close()
 
-	e.GET("/", c.homeController.Index)
+	e.GET("/metrics", echoprometheus.NewHandler())
 
+	c.v1.Routes(e.Group("/v1"))
 	printRoutes(e.Routes())
 
 	return e

@@ -1,12 +1,9 @@
+// Package cmd run command for just testing
 package cmd
 
 import (
 	"fmt"
-	"net/http"
-	"os"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
 )
 
@@ -20,11 +17,5 @@ var _runCmd = &cobra.Command{
 }
 
 func run() {
-	fmt.Println(os.Hostname())
-	e := echo.New()
-	e.Use(middleware.Recover())
-	e.GET("/", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, "test is ok")
-	})
-	e.Logger.Fatal(e.Start(":1323"))
+	fmt.Println("test is ok")
 }
