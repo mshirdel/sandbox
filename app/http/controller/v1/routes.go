@@ -20,6 +20,6 @@ func New(a *app.Application) *Router {
 func (r *Router) Routes(g *echo.Group) {
 	user := g.Group("/users")
 	{
-		user.GET("", r.userController.GetUser)
+		user.GET("/:id", r.userController.GetUser)
 	}
 }
