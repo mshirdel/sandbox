@@ -17,5 +17,9 @@ var _runCmd = &cobra.Command{
 }
 
 func run() {
-	fmt.Println("test is ok")
+	nums := make([]int, 0, 10)
+	for i := range 10 {
+		nums = append(nums, i)
+	}
+	fmt.Println(nums)
 }
