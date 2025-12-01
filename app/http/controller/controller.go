@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"math"
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo-contrib/echoprometheus"
@@ -29,12 +30,17 @@ func (c *Controller) Routes() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	e.Use(echoprometheus.NewMiddleware("sandbox-app"))
 	trace := jaegertracing.New(e, nil)
 	defer trace.Close()
 
 	e.GET("/metrics", echoprometheus.NewHandler())
 
+	e.POST("/info", func(c echo.Context) error {
+		response := `<h1>a simple go app</h1>`
+		return c.JSON(http.StatusOK, response)
+	})
 	c.v1.Routes(e.Group("/v1"))
 	printRoutes(e.Routes())
 
