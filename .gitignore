@@ -18,11 +18,17 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Go coverage files
+coverage.out
+coverage.html
+*.cover
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
 # Go workspace file
 go.work
+go.work.sum
 
 ### Go Patch ###
 /vendor/
@@ -30,25 +36,96 @@ go.work
 
 # End of https://www.toptal.com/developers/gitignore/api/go
 
-# Go workspace sum file
-go.work.sum
+# Build artifacts
+/sandbox
+/dist/
+/build/
+/tmp/
 
-# ide and text editor
+# IDE and text editor
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
-# tmp and bin folder
-.tmp
-/bin/
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
-# mokhles binary
-./mokhles
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
 
-# config files
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# Logs
+*.log
+logs/
+log/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+pgdata/
+
+# Docker
+.dockerignore
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.tmp/
+
+# Config files
 config*.yml
+config*.yaml
+*.config
 
-# helm packages
+# Helm packages
 .chart/*.tgz
+
+# Kubernetes
+*.yaml.tmp
+
+# Load testing
+load_test/results/
+load_test/reports/
+
+sandbox

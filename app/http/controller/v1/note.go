@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/mshirdel/sandbox/models"
+	"github.com/mshirdel/sandbox/repository"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,19 +29,25 @@ type DeleteNoteRequest struct {
 }
 
 type NoteResponse struct {
-	ID      uint   `json:"id"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	ID        uint   `json:"id"`
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 }
 
 type NotesResponse struct {
 	Notes []NoteResponse `json:"notes"`
 }
 
-type NoteController struct{}
+type NoteController struct {
+	noteRepository repository.NoteRepository
+}
 
-func NewNoteController() *NoteController {
-	return &NoteController{}
+func NewNoteController(noteRepo repository.NoteRepository) *NoteController {
+	return &NoteController{
+		noteRepository: noteRepo,
+	}
 }
 
 func (n *NoteController) GetNote(ctx echo.Context) error {
@@ -48,24 +56,42 @@ func (n *NoteController) GetNote(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	// Mock response - in real app this would fetch from database
-	note := NoteResponse{
-		ID:      req.ID,
-		Title:   "Sample Note",
-		Content: "This is a sample note content",
+	note, err := n.noteRepository.GetByID(req.ID)
+	if err != nil {
+		logrus.Errorf("Failed to get note with ID %d: %v", req.ID, err)
+		return ctx.JSON(http.StatusNotFound, map[string]string{"error": "Note not found"})
 	}
 
-	return ctx.JSON(http.StatusOK, note)
+	response := NoteResponse{
+		ID:        note.ID,
+		Title:     note.Title,
+		Content:   note.Content,
+		CreatedAt: note.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: note.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return ctx.JSON(http.StatusOK, response)
 }
 
 func (n *NoteController) GetNotes(ctx echo.Context) error {
-	// Mock response - in real app this would fetch from database
-	notes := []NoteResponse{
-		{ID: 1, Title: "First Note", Content: "Content of first note"},
-		{ID: 2, Title: "Second Note", Content: "Content of second note"},
+	notes, err := n.noteRepository.GetAll()
+	if err != nil {
+		logrus.Errorf("Failed to get notes: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to retrieve notes"})
 	}
 
-	return ctx.JSON(http.StatusOK, NotesResponse{Notes: notes})
+	var responses []NoteResponse
+	for _, note := range notes {
+		responses = append(responses, NoteResponse{
+			ID:        note.ID,
+			Title:     note.Title,
+			Content:   note.Content,
+			CreatedAt: note.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+			UpdatedAt: note.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		})
+	}
+
+	return ctx.JSON(http.StatusOK, NotesResponse{Notes: responses})
 }
 
 func (n *NoteController) CreateNote(ctx echo.Context) error {
@@ -74,16 +100,28 @@ func (n *NoteController) CreateNote(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	logrus.Infof("Creating note with title: %s", req.Title)
-
-	// Mock response - in real app this would save to database
-	note := NoteResponse{
-		ID:      123,
+	note := &models.Note{
 		Title:   req.Title,
 		Content: req.Content,
 	}
 
-	return ctx.JSON(http.StatusCreated, note)
+	err := n.noteRepository.Create(note)
+	if err != nil {
+		logrus.Errorf("Failed to create note: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create note"})
+	}
+
+	logrus.Infof("Created note with ID: %d", note.ID)
+
+	response := NoteResponse{
+		ID:        note.ID,
+		Title:     note.Title,
+		Content:   note.Content,
+		CreatedAt: note.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: note.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return ctx.JSON(http.StatusCreated, response)
 }
 
 func (n *NoteController) UpdateNote(ctx echo.Context) error {
@@ -92,16 +130,38 @@ func (n *NoteController) UpdateNote(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	logrus.Infof("Updating note ID: %d", req.ID)
-
-	// Mock response - in real app this would update in database
-	note := NoteResponse{
-		ID:      req.ID,
-		Title:   req.Title,
-		Content: req.Content,
+	// First get the existing note
+	existingNote, err := n.noteRepository.GetByID(req.ID)
+	if err != nil {
+		logrus.Errorf("Failed to get note with ID %d: %v", req.ID, err)
+		return ctx.JSON(http.StatusNotFound, map[string]string{"error": "Note not found"})
 	}
 
-	return ctx.JSON(http.StatusOK, note)
+	// Update fields if provided
+	if req.Title != "" {
+		existingNote.Title = req.Title
+	}
+	if req.Content != "" {
+		existingNote.Content = req.Content
+	}
+
+	err = n.noteRepository.Update(existingNote)
+	if err != nil {
+		logrus.Errorf("Failed to update note with ID %d: %v", req.ID, err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update note"})
+	}
+
+	logrus.Infof("Updated note ID: %d", req.ID)
+
+	response := NoteResponse{
+		ID:        existingNote.ID,
+		Title:     existingNote.Title,
+		Content:   existingNote.Content,
+		CreatedAt: existingNote.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt: existingNote.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return ctx.JSON(http.StatusOK, response)
 }
 
 func (n *NoteController) DeleteNote(ctx echo.Context) error {
@@ -110,8 +170,13 @@ func (n *NoteController) DeleteNote(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	logrus.Infof("Deleting note ID: %d", req.ID)
+	err := n.noteRepository.Delete(req.ID)
+	if err != nil {
+		logrus.Errorf("Failed to delete note with ID %d: %v", req.ID, err)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to delete note"})
+	}
 
-	// Mock response - in real app this would delete from database
+	logrus.Infof("Deleted note ID: %d", req.ID)
+
 	return ctx.JSON(http.StatusOK, map[string]string{"message": "Note deleted successfully"})
 }

@@ -15,7 +15,7 @@ func New(a *app.Application) *Router {
 	return &Router{
 		app:            a,
 		userController: NewUserController(),
-		noteController: NewNoteController(),
+		noteController: NewNoteController(a.NoteRepository),
 	}
 }
 

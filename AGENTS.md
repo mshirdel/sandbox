@@ -42,7 +42,28 @@
 - Controller struct with methods
 - Routes in separate Router struct
 
+### Models
+- Use Gorm for ORM with PostgreSQL
+- Include soft delete with `gorm.DeletedAt`
+- Use proper Gorm tags: `gorm:"primaryKey"`, `gorm:"not null"`, etc.
+- JSON tags for API responses
+- Validation tags for input validation
+- Custom table names with `TableName()` method
+
+### Repository
+- Repository pattern for data access layer
+- Interface-based design for testability
+- Gorm-based implementations
+- Repository files: `*_repository.go`
+- Repository test files: `*_repository_test.go`
+
 ### Testing
 - Use `testify/assert` for assertions
 - Test files: `*_test.go`
 - Test functions: `Test_FunctionName_Scenario`
+- Use in-memory SQLite for repository tests
+
+### Database
+- PostgreSQL for production
+- Auto-migration with Gorm
+- Connection handling in application layer

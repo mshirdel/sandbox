@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: Sandbox API
+  description: A Go-based REST API for managing users and notes
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@sandbox.com
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.sandbox.com/v1
+    description: Production server
+
+paths:
+  /v1/users/{id}:
+    get:
+      summary: Get user by ID
+      description: Retrieve a user by their ID with optional sorting
+      operationId: getUser
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - name: sort
+          in: query
+          required: true
+          description: Sort order
+          schema:
+            type: string
+            example: "asc"
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUserRequest'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/users:
+    post:
+      summary: Save a message
+      description: Save a message with title and content
+      operationId: saveMessage
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveMessageRequest'
+      responses:
+        '200':
+          description: Message saved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveMessageResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/notes:
+    get:
+      summary: Get all notes
+      description: Retrieve a list of all notes
+      operationId: getNotes
+      tags:
+        - Notes
+      responses:
+        '200':
+          description: Notes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotesResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new note
+      description: Create a new note with title and content
+      operationId: createNote
+      tags:
+        - Notes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNoteRequest'
+      responses:
+        '201':
+          description: Note created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/notes/{id}:
+    get:
+      summary: Get note by ID
+      description: Retrieve a specific note by its ID
+      operationId: getNote
+      tags:
+        - Notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Note ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Note retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteResponse'
+        '404':
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update a note
+      description: Update an existing note's title and/or content
+      operationId: updateNote
+      tags:
+        - Notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Note ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNoteRequest'
+      responses:
+        '200':
+          description: Note updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a note
+      description: Soft delete a note by its ID
+      operationId: deleteNote
+      tags:
+        - Notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Note ID
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Note deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Note deleted successfully"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Bad request"
+
+    GetUserRequest:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: int64
+          description: User ID
+          example: 123
+        Sort:
+          type: string
+          description: Sort order
+          example: "asc"
+
+    SaveMessageRequest:
+      type: object
+      required:
+        - title
+        - message
+      properties:
+        title:
+          type: string
+          description: Message title
+          example: "Hello World"
+        message:
+          type: string
+          description: Message content
+          example: "This is a test message"
+
+    SaveMessageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Generated message ID
+          example: 1010
+
+    CreateNoteRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: Note title
+          example: "My First Note"
+          minLength: 1
+        content:
+          type: string
+          description: Note content
+          example: "This is the content of my first note"
+          minLength: 1
+
+    UpdateNoteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Note title (optional)
+          example: "Updated Note Title"
+        content:
+          type: string
+          description: Note content (optional)
+          example: "Updated note content"
+
+    NoteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Note ID
+          example: 1
+        title:
+          type: string
+          description: Note title
+          example: "My Note"
+        content:
+          type: string
+          description: Note content
+          example: "Note content here"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-01T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-01T12:30:00Z"
+
+    NotesResponse:
+      type: object
+      properties:
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteResponse'
+          description: List of notes
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Users
+    description: User management endpoints
+  - name: Notes
+    description: Note management endpoints
